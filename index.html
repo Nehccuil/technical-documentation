@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSV Check 1.0.0 使用文档</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --surface:#fff; --ink:#1f2328; --muted:#5b6572;
+    --line:#e4e8ee; --accent:#2f6fed; --accent-soft:#eef3ff;
+    --green:#1a7f4b; --green-soft:#e8f6ee;
+    --red:#c62f2f; --red-soft:#fdecec;
+    --amber:#a86400; --amber-soft:#fff4e0;
+    --code-bg:#1b1f24; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);line-height:1.75;
+    font-family:"Segoe UI","Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    font-size:15px;
+  }
+  .layout{display:grid;grid-template-columns:212px minmax(0,1fr);gap:44px;max-width:1160px;margin:0 auto;padding:0 26px}
+
+  /* 目录 */
+  aside{position:sticky;top:0;align-self:start;padding:42px 0;font-size:13.5px}
+  .toc-title{font-size:11.5px;letter-spacing:.1em;color:#8a94a2;font-weight:700;margin:0 0 10px 10px}
+  aside a{display:block;padding:6px 10px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;border-radius:0 6px 6px 0}
+  aside a:hover{color:var(--accent);border-left-color:var(--accent);background:var(--accent-soft)}
+
+  main{background:var(--surface);margin:28px 0 40px;padding:46px 50px 56px;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+
+  /* 标题区 */
+  .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:10px}
+  h1{font-size:30px;line-height:1.35;margin:0 0 12px;letter-spacing:-.01em}
+  .lead{font-size:16.5px;color:var(--muted);margin:0 0 18px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+  .chip{font-size:12.5px;padding:3px 10px;border-radius:999px;background:#f1f4f9;border:1px solid var(--line);color:#3d4653}
+
+  h2{font-size:21px;margin:46px 0 14px;padding-top:14px;border-top:1px solid var(--line);letter-spacing:-.005em}
+  h2 .n{color:var(--accent);font-weight:800;margin-right:8px;font-variant-numeric:tabular-nums}
+  h3{font-size:15.5px;margin:26px 0 8px}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:4px 0}
+
+  code{font-family:Consolas,"Cascadia Mono","Courier New",monospace;font-size:.9em;background:#f0f3f7;border:1px solid #e6eaf0;border-radius:4px;padding:0 5px;white-space:nowrap}
+
+  /* 终端窗口 */
+  .term{background:var(--code-bg);border-radius:10px;overflow:hidden;margin:14px 0;box-shadow:0 8px 22px rgba(16,24,40,.16)}
+  .term-bar{display:flex;align-items:center;gap:7px;padding:9px 12px;background:#262c35;border-bottom:1px solid #10141a}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .d1{background:#ff5f57}.d2{background:#febc2e}.d3{background:#28c840}
+  .term-title{margin-left:6px;color:#98a2b0;font-size:12px;font-family:Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{margin-left:auto;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;color:#fff;flex:none}
+  .tag-pass{background:var(--green)}.tag-fail{background:var(--red)}.tag-err{background:var(--amber)}
+  .term pre{margin:0;padding:15px 18px;color:#e6edf3;font-size:13px;line-height:1.7;overflow-x:auto;font-family:Consolas,"Cascadia Mono",monospace}
+  .term pre .p{color:#7ee787}
+  .term pre .muted{color:#8b949e}
+  .cap{font-size:12.5px;color:#8a94a2;margin:-6px 0 20px}
+
+  /* 表格 */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f6f8fb;font-weight:600;color:#3d4653;white-space:nowrap}
+  td code{font-size:.86em}
+  tbody tr:last-child td{border-bottom:none}
+
+  /* 卡片 */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  .card{border:1px solid var(--line);border-radius:10px;padding:14px 18px;background:#fbfcfe}
+  .card h4{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
+  .card ul{margin:0;padding-left:18px;font-size:13.5px;color:#3d4653}
+  .mark{width:8px;height:8px;border-radius:50%;flex:none}
+  .mark-yes{background:var(--green)}.mark-no{background:#c0c6cf}
+
+  /* 提示框 */
+  .callout{padding:13px 16px;border-radius:10px;border:1px solid;font-size:14px;margin:16px 0}
+  .callout strong{display:block;margin-bottom:3px}
+  .info{background:var(--accent-soft);border-color:#cddaff}
+  .ok{background:var(--green-soft);border-color:#c2e6d0}
+  .warn{background:var(--amber-soft);border-color:#f0d9ae}
+
+  /* 步骤 */
+  .steps{counter-reset:s;list-style:none;padding:0;margin:18px 0 6px}
+  .steps>li{counter-increment:s;position:relative;padding-left:44px;margin-bottom:24px}
+  .steps>li::before{content:counter(s);position:absolute;left:0;top:1px;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+  .steps h3{margin:0 0 6px}
+
+  .kbd{display:inline-block;padding:1px 6px;border:1px solid #ccd3dd;border-bottom-width:2px;border-radius:4px;background:#fff;font-size:12px;font-family:Consolas,monospace;white-space:nowrap}
+
+  details{border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0;background:#fbfcfe}
+  summary{cursor:pointer;font-weight:600;font-size:14px;color:#2b323b}
+  details p{margin:10px 0 2px;font-size:14px;color:#3d4653}
+
+  .figure{margin:18px 0 8px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe;padding:18px 14px 10px}
+  .figure svg{display:block;width:100%;height:auto}
+
+  footer{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:#8a94a2}
+
+  @media (max-width:920px){
+    .layout{grid-template-columns:1fr;gap:0}
+    aside{display:none}
+    main{margin:16px 0;padding:30px 22px 40px}
+    .cards{grid-template-columns:1fr}
+    h1{font-size:25px}
+    .figure{overflow-x:auto}
+    .figure svg{min-width:700px}
+  }
+  @media print{
+    body{background:#fff;font-size:12px}
+    aside{display:none}
+    .layout{display:block;max-width:none;padding:0}
+    main{border:none;box-shadow:none;margin:0;padding:0}
+    .term,th,.callout,.card,.figure{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    h2{page-break-after:avoid}
+    .term,table{page-break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside>
+  <p class="toc-title">目录</p>
+  <a href="#what">1 · 这是什么工具</a>
+  <a href="#prepare">2 · 运行前的准备</a>
+  <a href="#run">3 · 三步跑起来</a>
+  <a href="#result">4 · 三种结果怎么读</a>
+  <a href="#require">5 · 换一组必需列</a>
+  <a href="#faq">6 · 常见问题</a>
+  <a href="#cheat">7 · 一页速查</a>
+</aside>
+
+<main>
+
+  <div class="eyebrow">技术文档 · CSV Check</div>
+  <h1>CSV Check 1.0.0 使用文档</h1>
+  <p class="lead">一个只读的命令行小工具：运行一条命令，确认成绩表里是否包含 <code>id</code>、<code>name</code>、<code>score</code> 三个必需列名。</p>
+  <div class="chips">
+    <span class="chip">Python 3.12+</span>
+    <span class="chip">无需安装第三方包</span>
+    <span class="chip">不修改原文件</span>
+    <span class="chip">Windows / macOS / Linux</span>
+  </div>
+
+  <!-- ============ 1 ============ -->
+  <h2 id="what"><span class="n">1</span>这是什么工具</h2>
+  <p>CSV Check 是随课程提供的一个 Python 脚本 <code>check.py</code>。它读取一张 CSV 成绩表，检查表头里有没有必需列，再打印一份简短报告。整个过程只读：不打开编辑器、不写回文件、不上传数据。</p>
+
+  <div class="cards">
+    <div class="card">
+      <h4><span class="mark mark-yes"></span>它会做</h4>
+      <ul>
+        <li>读取 UTF-8 编码的 CSV 表头</li>
+        <li>统计数据行数（不含表头）</li>
+        <li>列出缺失的必需列</li>
+        <li>用 PASS / FAIL 给出结论和退出码</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4><span class="mark mark-no"></span>它不会做</h4>
+      <ul>
+        <li>不修改、不重排你的文件</li>
+        <li>不校验分数范围或重复 id</li>
+        <li>不保证导入系统一定成功</li>
+        <li>不读 <code>.xlsx</code>；1.0.0 也不识别制表符分隔</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="figure">
+    <svg viewBox="0 0 860 252" role="img" aria-label="CSV Check 判定流程：能读且有表头才继续，必需列齐全才 PASS">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#8a94a2"></path>
+        </marker>
+      </defs>
+
+      <rect x="12" y="58" width="124" height="68" rx="10" fill="#eef3ff" stroke="#c9d8ff"></rect>
+      <text x="74" y="86" text-anchor="middle" font-size="13" fill="#1f2328" font-family="Microsoft YaHei,sans-serif">输入文件</text>
+      <text x="74" y="106" text-anchor="middle" font-size="11.5" fill="#5b6572" font-family="Consolas,monospace">samples/*.csv</text>
+
+      <line x1="136" y1="92" x2="172" y2="92" stroke="#8a94a2" stroke-width="1.6" marker-end="url(#ar)"></line>
+
+      <rect x="176" y="48" width="210" height="88" rx="10" fill="#f7faff" stroke="#b9cdf7"></rect>
+      <text x="281" y="82" text-anchor="middle" font-size="13" fill="#1f2328" font-family="Microsoft YaHei,sans-serif">① 能按 UTF-8 读取</text>
+      <text x="281" y="102" text-anchor="middle" font-size="13" fill="#1f2328" font-family="Microsoft YaHei,sans-serif">并且有表头？</text>
+
+      <line x1="386" y1="92" x2="428" y2="92" stroke="#8a94a2" stroke-width="1.6" marker-end="url(#ar)"></line>
+      <text x="404" y="84" text-anchor="middle" font-size="11" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">是</text>
+
+      <rect x="432" y="48" width="206" height="88" rx="10" fill="#f7faff" stroke="#b9cdf7"></rect>
+      <text x="535" y="82" text-anchor="middle" font-size="13" fill="#1f2328" font-family="Microsoft YaHei,sans-serif">② id、name、score</text>
+      <text x="535" y="102" text-anchor="middle" font-size="13" fill="#1f2328" font-family="Microsoft YaHei,sans-serif">都找得到？</text>
+
+      <line x1="638" y1="92" x2="686" y2="92" stroke="#8a94a2" stroke-width="1.6" marker-end="url(#ar)"></line>
+      <text x="660" y="84" text-anchor="middle" font-size="11" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">是</text>
+
+      <rect x="690" y="58" width="156" height="68" rx="10" fill="#e8f6ee" stroke="#bfe6cf"></rect>
+      <text x="768" y="86" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1a7f4b" font-family="Microsoft YaHei,sans-serif">PASS</text>
+      <text x="768" y="106" text-anchor="middle" font-size="11.5" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">退出码 0</text>
+
+      <line x1="281" y1="136" x2="281" y2="176" stroke="#8a94a2" stroke-width="1.6" marker-end="url(#ar)"></line>
+      <text x="293" y="160" font-size="11" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">否</text>
+
+      <rect x="190" y="180" width="182" height="60" rx="10" fill="#fff4e0" stroke="#f0d9ae"></rect>
+      <text x="281" y="205" text-anchor="middle" font-size="13" font-weight="700" fill="#a86400" font-family="Microsoft YaHei,sans-serif">ERROR</text>
+      <text x="281" y="226" text-anchor="middle" font-size="11.5" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">退出码 2 · 先修源文件</text>
+
+      <line x1="535" y1="136" x2="535" y2="176" stroke="#8a94a2" stroke-width="1.6" marker-end="url(#ar)"></line>
+      <text x="547" y="160" font-size="11" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">否</text>
+
+      <rect x="444" y="180" width="182" height="60" rx="10" fill="#fdecec" stroke="#f2c9c9"></rect>
+      <text x="535" y="205" text-anchor="middle" font-size="13" font-weight="700" fill="#c62f2f" font-family="Microsoft YaHei,sans-serif">FAIL</text>
+      <text x="535" y="226" text-anchor="middle" font-size="11.5" fill="#5b6572" font-family="Microsoft YaHei,sans-serif">退出码 1 · 缺必需列</text>
+    </svg>
+  </div>
+  <p class="cap">判定顺序：先确认“读得到”，再确认“列齐全”。任何一步不通过就立刻停下，不会继续往下判断。</p>
+
+  <!-- ============ 2 ============ -->
+  <h2 id="prepare"><span class="n">2</span>运行前的准备</h2>
+
+  <h3>2.1 需要什么</h3>
+  <table>
+    <thead>
+      <tr><th>项目</th><th>要求</th><th>怎么确认</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td>3.12 或更高版本（3.8 以上一般也能运行）</td><td><code>python --version</code></td></tr>
+      <tr><td>第三方包</td><td>无。全部使用 Python 标准库，<strong>不需要</strong> <code>pip install</code></td><td>—</td></tr>
+      <tr><td>终端</td><td>编辑器内置终端，或 Windows PowerShell</td><td>能输入命令并回车</td></tr>
+      <tr><td>文件</td><td><code>check.py</code>、<code>csvcheck</code> 文件夹、<code>samples</code> 文件夹放在同一层</td><td>见 2.2 目录结构</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.2 目录要长成这样</h3>
+  <p>在编辑器里打开 <code>01_写作练习</code> 这个<strong>文件夹</strong>（不是单独打开 <code>check.py</code>），确认结构如下：</p>
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">01_写作练习</span></div>
+    <pre>01_写作练习\
+├─ check.py            ← 运行入口
+├─ csvcheck\           ← 被 check.py 导入的包，必须与它同层
+│  ├─ __init__.py
+│  └─ __main__.py
+└─ samples\            ← 随课程提供的虚构数据
+   ├─ students.csv
+   ├─ missing-name.csv
+   └─ empty.csv</pre>
+  </div>
+  <p class="cap">实际运行前的工作目录示意，不是命令输出。</p>
+
+  <div class="callout warn">
+    <strong>check.py 不能单独拷走</strong>
+    它第一行就 <code>from csvcheck import ...</code>。只复制 <code>check.py</code> 到一个新位置会立刻失败：<code>ModuleNotFoundError: No module named 'csvcheck'</code>。搬家时请连 <code>csvcheck</code> 文件夹一起搬。
+  </div>
+
+  <h3>2.3 确认 Python 可用</h3>
+  <p>在终端里输入版本命令：</p>
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">Windows PowerShell</span></div>
+    <pre><span class="p">PS&gt;</span> python --version
+Python 3.12.8</pre>
+  </div>
+  <p class="cap">只要能看到 <code>Python 3.x.x</code> 就说明准备好了；后面的示例统一使用 <code>python</code>。</p>
+  <p>如果提示“不是内部或外部命令”，先试试 <code>py --version</code> 或 <code>python3 --version</code>；哪个能出版本号，就把下文命令里的 <code>python</code> 换成它。</p>
+
+  <!-- ============ 3 ============ -->
+  <h2 id="run"><span class="n">3</span>三步跑起来</h2>
+
+  <ol class="steps">
+    <li>
+      <h3>打开课程文件夹</h3>
+      <p>在编辑器中选“文件 → 打开文件夹”，选中 <code>01_写作练习</code>。左侧资源管理器里应同时看到 <code>check.py</code>、<code>csvcheck</code>、<code>samples</code> 三项。</p>
+    </li>
+    <li>
+      <h3>新建终端</h3>
+      <p>菜单“终端 → 新建终端”（快捷键 <span class="kbd">Ctrl</span>+<span class="kbd">`</span>）。终端会默认停在这个文件夹，提示符里的路径应以 <code>01_写作练习</code> 结尾。如果路径不对，先执行 <code>cd 01_写作练习</code>。</p>
+    </li>
+    <li>
+      <h3>运行检查命令</h3>
+      <p>输入下面这条命令并回车（文件名可以换成任意一个 <code>.csv</code>）：</p>
+      <div class="term">
+        <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">Windows PowerShell — 01_写作练习</span><span class="tag tag-pass">PASS</span></div>
+        <pre><span class="p">PS&gt;</span> python check.py samples/students.csv
+CSV Check 1.0.0
+File: samples/students.csv
+Data rows: 3
+Columns: id, name, score
+Missing columns: none
+Result: PASS
+PASS checks column names, not score values.</pre>
+      </div>
+      <p class="cap">实际运行输出（Windows + Python 3.12.8）。输出是纯文本，可直接复制进记录表。</p>
+    </li>
+  </ol>
+
+  <h3>逐行读懂这份报告</h3>
+  <table>
+    <thead><tr><th>输出行</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td><code>CSV Check 1.0.0</code></td><td>工具版本号，写文档时照抄这一行最稳妥</td></tr>
+      <tr><td><code>File: samples/students.csv</code></td><td>实际读取的路径，相对于当前所在目录</td></tr>
+      <tr><td><code>Data rows: 3</code></td><td>数据记录 3 条，<strong>不含</strong>表头那一行</td></tr>
+      <tr><td><code>Columns: id, name, score</code></td><td>从表头读到的全部列名</td></tr>
+      <tr><td><code>Missing columns: none</code></td><td>必需列一个都不缺；有缺失时会逐个列在这里</td></tr>
+      <tr><td><code>Result: PASS</code></td><td>结论：必需列齐全</td></tr>
+      <tr><td><code>PASS checks column names, not score values.</code></td><td>边界提醒：PASS 不代表分数正确</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ============ 4 ============ -->
+  <h2 id="result"><span class="n">4</span>三种结果怎么读</h2>
+  <p>命令跑完只会出现三种结局。先看最后几行，再决定下一步。</p>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">PASS — samples/students.csv</span><span class="tag tag-pass">PASS</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/students.csv
+CSV Check 1.0.0
+File: samples/students.csv
+Data rows: 3
+Columns: id, name, score
+Missing columns: none
+Result: PASS
+PASS checks column names, not score values.</pre>
+  </div>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">FAIL — samples/missing-name.csv</span><span class="tag tag-fail">FAIL</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/missing-name.csv
+CSV Check 1.0.0
+File: samples/missing-name.csv
+Data rows: 1
+Columns: id, score
+Missing columns: name
+Result: FAIL
+PASS checks column names, not score values.</pre>
+  </div>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">ERROR — samples/empty.csv</span><span class="tag tag-err">ERROR</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/empty.csv
+CSV Check 1.0.0
+ERROR: File has no header.
+Next step: use a readable UTF-8 file with a header row.</pre>
+  </div>
+
+  <table>
+    <thead><tr><th>结果</th><th>出现条件</th><th>退出码</th><th>下一步</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong style="color:var(--green)">PASS</strong></td>
+        <td>能正常读取，且必需列全部存在</td>
+        <td><code>0</code></td>
+        <td>可以进入下一步流程</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--red)">FAIL</strong></td>
+        <td>能读取，但缺少必需列</td>
+        <td><code>1</code></td>
+        <td>补齐列名，或用 <code>--require</code> 改要求（见第 5 节）</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--amber)">ERROR</strong></td>
+        <td>空文件、没有表头、表头有空列名或重复、字段数与表头不一致、不是 UTF-8</td>
+        <td><code>2</code></td>
+        <td>先修源文件，再重新运行</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>PASS 的边界</strong>
+    PASS 只证明“要求的列名齐全”。它不检查分数范围、不查重复 id，也不代表导入一定成功。写说明文档时，请把这句话和 PASS 一起交代，否则读者会误解。
+  </div>
+
+  <!-- ============ 5 ============ -->
+  <h2 id="require"><span class="n">5</span>换一组必需列</h2>
+  <p>默认要求 <code>id name score</code>。用 <code>--require</code> 可以临时指定别的列，列名写在文件名后面，区分大小写：</p>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">--require 只要求两列</span><span class="tag tag-pass">PASS</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/students.csv --require id name
+CSV Check 1.0.0
+File: samples/students.csv
+Data rows: 3
+Columns: id, name, score
+Missing columns: none
+Result: PASS
+PASS checks column names, not score values.</pre>
+  </div>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">--require 要求一个不存在的列</span><span class="tag tag-fail">FAIL</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/students.csv --require id name class
+CSV Check 1.0.0
+File: samples/students.csv
+Data rows: 3
+Columns: id, name, score
+Missing columns: class
+Result: FAIL
+PASS checks column names, not score values.</pre>
+  </div>
+
+  <p>注意第二条：文件本身没问题，是<strong>要求变了</strong>，所以结论变成 FAIL。这也是为什么文档里必须写清楚“这次检查要求哪些列”。</p>
+
+  <!-- ============ 6 ============ -->
+  <h2 id="faq"><span class="n">6</span>常见问题</h2>
+
+  <details>
+    <summary>提示 can't open file 'check.py'：找不到脚本</summary>
+    <p>当前目录不在 <code>01_写作练习</code>。先用 <code>pwd</code>（PowerShell 用 <code>Get-Location</code>）看路径，再 <code>cd</code> 到包含 <code>check.py</code> 的文件夹；或重新“打开文件夹”。不要靠反复重装 Python 解决。</p>
+  </details>
+
+  <details>
+    <summary>提示 python 不是内部或外部命令</summary>
+    <p>这台机器上的命令名可能是 <code>py</code> 或 <code>python3</code>。先用 <code>py --version</code>／<code>python3 --version</code> 试出可用的那个，再把命令的第一个词替换掉，后面保持不变。</p>
+  </details>
+
+  <details>
+    <summary>检查 .tsv 时结果为 FAIL，列名看起来“都在”</summary>
+    <p>1.0.0 只按逗号切分，制表符分隔的整行会被当成一个列名，于是 <code>Missing columns</code> 会把三列都列出来。处理办法：先另存为逗号分隔的 CSV；或者使用 1.1.0 版本并加 <code>--delimiter \t</code>。</p>
+  </details>
+
+  <details>
+    <summary>终端里冒出一段红色的 PowerShell 配置报错</summary>
+    <p>那是本机终端加载 profile 脚本被策略拦截，与 CSV Check 无关。只要上面几行报告正常打印，结果就是有效的。</p>
+  </details>
+
+  <details>
+    <summary>PASS 了，但表里的分数明显不对</summary>
+    <p>符合预期。工具只比对列名。分数核对属于数据校验，不在本工具范围内。</p>
+  </details>
+
+  <!-- ============ 7 ============ -->
+  <h2 id="cheat"><span class="n">7</span>一页速查</h2>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span><span class="term-title">最常用的一条命令</span></div>
+    <pre><span class="p">PS&gt;</span> python check.py samples/students.csv
+<span class="muted"># 改必需列：python check.py 文件.csv --require id name
+# 看帮助：  python check.py --help</span></pre>
+  </div>
+
+  <table>
+    <thead><tr><th>看到什么</th><th>说明</th><th>退出码</th></tr></thead>
+    <tbody>
+      <tr><td><code>Result: PASS</code></td><td>必需列齐全</td><td>0</td></tr>
+      <tr><td><code>Result: FAIL</code></td><td>缺列，看 <code>Missing columns</code></td><td>1</td></tr>
+      <tr><td><code>ERROR:</code></td><td>文件本身读不了，先修源文件</td><td>2</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout ok">
+    <strong>提交前的三秒自检</strong>
+    ① 命令是在 <code>01_写作练习</code> 里执行的；② 输出里有完整的 <code>CSV Check 1.0.0</code> 到 <code>Result:</code> 六行以上；③ 说明了 PASS 只代表列名齐全。
+  </div>
+
+  <footer>
+    本文档对应 <code>01_写作练习/check.py</code> 1.0.0。文中命令与输出均在 Windows + Python 3.12.8 上实际运行取得；示例数据为虚构学生数据。
+  </footer>
+
+</main>
+</div>
+</body>
+</html>
